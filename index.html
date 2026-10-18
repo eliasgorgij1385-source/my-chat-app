@@ -3,115 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Telegram Web</title>
+    <title>Telegram Glass</title>
     <style>
-        :root[data-theme="dark"] { --bg-main: #0e0e0e; --bg-surface: #1c1c1e; --bg-search: #2c2c2e; --text-main: #ffffff; --text-muted: #8e8e93; --msg-mine: #2b5278; --msg-other: #1c1c1e; --active-green: #31a24c; --active-bg: #1a2c1e; --border: #222; }
-        :root[data-theme="light"] { --bg-main: #ffffff; --bg-surface: #f1f1f1; --bg-search: #e6e6e6; --text-main: #000000; --text-muted: #666666; --msg-mine: #eeffde; --msg-other: #ffffff; --active-green: #3390ec; --active-bg: #e3f2fd; --border: #e0e0e0; }
-        * { box-sizing: border-box; transition: background 0.3s, color 0.3s; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-main); overflow: hidden; color: var(--text-main); }
-        #app { display: flex; flex-direction: column; height: 100vh; }
-        
-        #header { background-color: var(--bg-main); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        :root {
+            --bg-main: #0a0a0c;
+            --bg-glass: rgba(30, 30, 35, 0.7);
+            --bg-glass-msg: rgba(43, 82, 120, 0.8);
+            --text-main: #ffffff;
+            --text-muted: #9e9e9e;
+            --active-green: #31a24c;
+            --border: rgba(255,255,255,0.1);
+        }
+        * { box-sizing: border-box; transition: all 0.3s; }
+        body, html { 
+            margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #0a0a0c, #1a1a24); 
+            color: var(--text-main); overflow: hidden; 
+        }
+        #app { display: flex; flex-direction: column; height: 100vh; padding-bottom: 65px;}
+
+        #header { background: var(--bg-glass); backdrop-filter: blur(15px); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;}
         #header-title { font-size: 20px; font-weight: bold; }
         
-        .view { flex: 1; overflow-y: auto; display: none; flex-direction: column; padding-bottom: 70px; }
+        .view { flex: 1; overflow-y: auto; display: none; flex-direction: column; }
         .view.active { display: flex; }
-        
+
+        .search-box { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px 15px; display: flex; margin: 10px 20px; align-items: center; color: var(--text-muted); border: 1px solid var(--border);}
+        .search-box input { background: transparent; border: none; outline: none; color: var(--text-main); width: 100%; font-size: 15px; }
+
         .chat-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; border-bottom: 1px solid var(--border); }
-        .avatar { width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; margin-left: 15px; color: white; background-size: cover; background-position: center;}
-        .bg-blue { background: #2b5278; }
+        .avatar { width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; margin-left: 15px; color: white; flex-shrink: 0; position: relative;}
+        .bg-blue { background: linear-gradient(135deg, #2b5278, #1e3a5f); } 
+        .bg-orange { background: linear-gradient(135deg, #ff9500, #cc7600); }
+        .bg-purple { background: linear-gradient(135deg, #5856d6, #3d3bb5); }
+        .bg-green { background: linear-gradient(135deg, #31a24c, #1e7533); }
+        
         .chat-info { flex: 1; overflow: hidden; }
-        .chat-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
+        .chat-name-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .chat-name { font-weight: bold; font-size: 16px; }
+        .chat-time { font-size: 12px; color: var(--text-muted); }
         .chat-msg { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        #view-chat-room { padding-bottom: 0; }
+        #chat-header { background: var(--bg-glass); backdrop-filter: blur(15px); padding: 10px 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;}
+        .back-btn { color: var(--active-green); cursor: pointer; padding: 5px;} .back-btn svg { width: 24px; height: 24px; fill: currentColor; transform: rotate(180deg); }
+        #messages-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
         
-        #view-chat-room { padding-bottom: 65px; } 
-        #chat-header { background-color: var(--bg-main); padding: 10px 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); }
-        .back-btn { color: var(--active-green); cursor: pointer; } .back-btn svg { width: 24px; height: 24px; fill: currentColor; transform: rotate(180deg); }
-        #messages-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        
-        .message { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 14px; position: relative; word-wrap: break-word; }
-        .msg-other { background-color: var(--msg-other); align-self: flex-start; border: 1px solid var(--border); border-bottom-right-radius: 2px;}
-        .msg-mine { background-color: var(--msg-mine); align-self: flex-end; border-bottom-left-radius: 2px;}
-        .sender-name { font-size: 12px; color: var(--active-green); font-weight: bold; margin-bottom: 3px; }
+        .message { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 14px; position: relative; word-wrap: break-word; backdrop-filter: blur(10px); box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+        .msg-other { background-color: var(--bg-glass); align-self: flex-start; border: 1px solid var(--border); border-bottom-right-radius: 3px;}
+        .msg-mine { background-color: var(--bg-glass-msg); align-self: flex-end; border-bottom-left-radius: 3px; border: 1px solid rgba(255,255,255,0.05);}
+        .sender-name { font-size: 12px; color: #64b5f6; font-weight: bold; margin-bottom: 5px; }
         .msg-mine .sender-name { display: none; }
-        .msg-time { font-size: 10px; color: var(--text-muted); float: left; margin-top: 5px; margin-right: 8px;}
-        
-        #input-area { padding: 10px 15px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); background: var(--bg-main); position: absolute; bottom: 65px; width: 100%; z-index: 10;}
-        #msg-input { flex: 1; padding: 12px 15px; background-color: var(--bg-search); color: var(--text-main); border-radius: 20px; border: none; outline: none; }
-        .action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center;}
+        .msg-time { font-size: 10px; color: rgba(255,255,255,0.6); float: left; margin-top: 5px; margin-right: 8px;}
+        .msg-image, .msg-audio { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; }
+
+        #input-area { padding: 10px 15px; display: flex; align-items: center; gap: 10px; background: var(--bg-glass); backdrop-filter: blur(15px); border-top: 1px solid var(--border); position: absolute; bottom: 65px; width: 100%; z-index: 100;}
+        #msg-input { flex: 1; padding: 12px 15px; background: rgba(0,0,0,0.3); color: var(--text-main); border-radius: 20px; border: 1px solid var(--border); outline: none; }
+        .action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px;}
         .action-btn svg { width: 24px; height: 24px; fill: currentColor; }
         #send-btn { color: var(--active-green); }
+        #record-btn { color: #ff3b30; display: none; }
         
-        #emoji-panel { position: absolute; bottom: 115px; left: 10px; right: 10px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: none; flex-wrap: wrap; gap: 10px; max-height: 200px; overflow-y: auto; z-index: 10;}
-        #emoji-panel.active { display: flex; }
-        .emoji-item { font-size: 24px; cursor: pointer; }
-
-        .profile-container { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; position: relative; }
-        .profile-avatar { width: 120px; height: 120px; border-radius: 50%; background: var(--bg-surface); display: flex; justify-content: center; align-items: center; font-size: 50px; margin-bottom: 20px; border: 3px solid var(--active-green); background-size: cover; background-position: center;}
-        .profile-name { font-size: 24px; font-weight: bold; margin: 0 0 5px 0; }
-        .profile-status { font-size: 15px; color: var(--text-muted); }
-        .edit-profile-btn { position: absolute; top: 40px; right: 20px; background: var(--bg-surface); color: var(--active-green); border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-family: inherit;}
-
-        .setting-item { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); }
-        .setting-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-left: 15px; font-size: 20px; color: white; }
-        .toggle-switch { margin-right: auto; appearance: none; width: 50px; height: 28px; background: var(--bg-search); border-radius: 20px; position: relative; outline: none; cursor: pointer; transition: 0.3s; }
-        .toggle-switch::after { content: ''; position: absolute; top: 2px; right: 2px; width: 24px; height: 24px; background: white; border-radius: 50%; transition: 0.3s; }
-        .toggle-switch:checked { background: var(--active-green); }
-        .toggle-switch:checked::after { right: calc(100% - 26px); }
-
-        #bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background-color: var(--bg-surface); display: flex; justify-content: space-around; align-items: center; z-index: 100; border-top: 1px solid var(--border); }
+        #bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: var(--bg-glass); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; z-index: 200; border-top: 1px solid var(--border); }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 11px; gap: 4px; cursor: pointer; padding: 5px 15px; border-radius: 20px;}
-        .nav-item.active { color: var(--active-green); background-color: var(--active-bg); }
+        .nav-item.active { color: var(--active-green); }
         .nav-item svg { width: 24px; height: 24px; fill: currentColor; }
 
-        #setup-area, #edit-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 999; }
-        #edit-modal { display: none; }
-        .setup-box { background: var(--bg-surface); padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; border: 1px solid var(--border); }
-        .setup-box h3 { text-align: center; margin-top: 0;}
-        .setup-box label { font-size: 14px; color: var(--text-muted); margin-bottom: 5px; display: block;}
-        .setup-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text-main); border-radius: 8px; outline: none;}
-        .setup-box button { width: 100%; padding: 12px; background: var(--active-green); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px;}
-        .setup-box .btn-cancel { background: #ff3b30; }
+        .call-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1c1c1e; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 2000;}
+        .call-avatar { width: 120px; height: 120px; border-radius: 50%; background: #333; display: flex; justify-content: center; align-items: center; font-size: 50px; margin-bottom: 20px; animation: pulse 2s infinite;}
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(49, 162, 76, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(49, 162, 76, 0); } 100% { box-shadow: 0 0 0 0 rgba(49, 162, 76, 0); } }
+        .end-call-btn { background: #ff3b30; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; cursor: pointer; margin-top: 40px; }
     </style>
 </head>
 <body>
 
-    <div id="setup-area">
-        <div class="setup-box">
-            <h3>Login</h3>
-            <input id="setup-name" type="text" placeholder="Your Name">
-            <button onclick="startChat()">Enter</button>
-        </div>
+    <!-- صفحه لاگین حذف شد، برنامه مستقیم لود می‌شود -->
+
+    <div id="call-screen" class="call-screen">
+        <div class="call-avatar">👤</div>
+        <h2 id="call-name">Calling...</h2>
+        <p style="color:gray;">Ringing...</p>
+        <button class="end-call-btn" onclick="endCall()">📞</button>
     </div>
 
-    <div id="edit-modal">
-        <div class="setup-box">
-            <h3>Edit Profile</h3>
-            <label>Name:</label>
-            <input type="text" id="edit-name-input">
-            
-            <label>Status (Bio):</label>
-            <input type="text" id="edit-status-input" placeholder="e.g. Coding... 🚀">
-
-            <label>Profile Picture:</label>
-            <input type="file" id="avatar-file" accept="image/*" style="color:white; border:none; padding:0;">
-
-            <button onclick="saveProfile()">Save</button>
-            <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
-        </div>
-    </div>
-
-    <div id="app" style="display:none;">
+    <div id="app">
         <div id="header">
             <div id="header-title">Telegram</div>
         </div>
 
         <div id="view-chat-list" class="view active">
-            <div class="chat-item" onclick="openRoom('General')">
-                <div class="avatar bg-blue">🌐</div>
+            <div class="search-box">
+                <input type="text" placeholder="Search (جستجو)...">
+            </div>
+            
+            <div class="chat-item" onclick="openRoom('Saved Messages', 'private')">
+                <div class="avatar bg-blue">📝</div>
                 <div class="chat-info">
-                    <div class="chat-name">General Chat</div>
-                    <div class="chat-msg">Chat with everyone here...</div>
+                    <div class="chat-name-row"><span class="chat-name">Saved Messages</span><span class="chat-time">10:30</span></div>
+                    <div class="chat-msg">Your personal cloud storage...</div>
+                </div>
+            </div>
+
+            <div class="chat-item" onclick="openRoom('Tech Group', 'group')">
+                <div class="avatar bg-orange">👥</div>
+                <div class="chat-info">
+                    <div class="chat-name-row"><span class="chat-name">Tech Group</span><span class="chat-time">Now</span></div>
+                    <div class="chat-msg">Ali: Did you see the new code?</div>
+                </div>
+            </div>
+
+            <div class="chat-item" onclick="openRoom('News Channel', 'channel')">
+                <div class="avatar bg-purple">📢</div>
+                <div class="chat-info">
+                    <div class="chat-name-row"><span class="chat-name">News Channel</span><span class="chat-time">12:00</span></div>
+                    <div class="chat-msg">Breaking news: Telegram clone is ready!</div>
+                </div>
+            </div>
+
+            <div class="chat-item" onclick="openRoom('AI Bot 🤖', 'bot')">
+                <div class="avatar bg-green">🤖</div>
+                <div class="chat-info">
+                    <div class="chat-name-row"><span class="chat-name">AI Assistant Bot</span><span class="chat-time">Online</span></div>
+                    <div class="chat-msg">Ask me anything...</div>
                 </div>
             </div>
         </div>
@@ -119,101 +132,46 @@
         <div id="view-chat-room" class="view">
             <div id="chat-header">
                 <div class="back-btn" onclick="closeRoom()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></div>
-                <div id="room-title" style="font-weight:bold; font-size:16px;">Room</div>
+                <div style="flex:1;">
+                    <div id="room-title" style="font-weight:bold; font-size:16px;">Room</div>
+                    <div id="room-status" style="font-size:12px; color:var(--active-green);">online</div>
+                </div>
+                <div class="action-btn" onclick="startCall()">📞</div>
             </div>
-            <div id="messages-container"></div>
             
-            <div id="emoji-panel">
-                <span class="emoji-item" onclick="addEmoji('😀')">😀</span>
-                <span class="emoji-item" onclick="addEmoji('😂')">😂</span>
-                <span class="emoji-item" onclick="addEmoji('❤️')">❤️</span>
-                <span class="emoji-item" onclick="addEmoji('👍')">👍</span>
-                <span class="emoji-item" onclick="addEmoji('🔥')">🔥</span>
-                <span class="emoji-item" onclick="addEmoji('🚀')">🚀</span>
-            </div>
+            <div id="messages-container"></div>
 
             <div id="input-area">
-                <button class="action-btn" onclick="toggleEmoji()">😀</button>
-                <input id="msg-input" type="text" placeholder="Message...">
+                <label class="action-btn">📎<input type="file" id="file-input" accept="image/*,video/*" style="display:none;" onchange="handleFile(event)"></label>
+                <input id="msg-input" type="text" placeholder="Message..." oninput="toggleRecordBtn()">
                 <button id="send-btn" class="action-btn" onclick="sendMessage()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+                <button id="record-btn" class="action-btn" onclick="toggleRecording()">🎙️</button>
             </div>
         </div>
 
         <div id="view-settings" class="view">
-            <div class="setting-item"><div class="setting-icon bg-blue">🌙</div><div>Night Mode</div><input type="checkbox" class="toggle-switch" id="theme-toggle" checked onchange="toggleTheme()"></div>
-        </div>
-
-        <div id="view-profile" class="view">
-            <div class="profile-container">
-                <button class="edit-profile-btn" onclick="openEditModal()">✏️ Edit</button>
-                <div class="profile-avatar" id="main-avatar">👤</div>
-                <h2 class="profile-name" id="profile-name">User</h2>
-                <p class="profile-status" id="profile-status">Online</p>
+            <div style="padding: 20px; text-align: center;">
+                <h3>Settings & Privacy 🔐</h3>
+                <p style="color:gray;">Dark Mode, Security, Themes</p>
             </div>
         </div>
 
         <div id="bottom-nav">
-            <div class="nav-item" id="nav-chats" onclick="switchTab('view-chat-list', 'Telegram', 'nav-chats')"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>Chats</div>
+            <div class="nav-item active" id="nav-chats" onclick="switchTab('view-chat-list', 'Telegram', 'nav-chats')"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>Chats</div>
             <div class="nav-item" id="nav-settings" onclick="switchTab('view-settings', 'Settings', 'nav-settings')"><svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>Settings</div>
-            <div class="nav-item" id="nav-profile" onclick="switchTab('view-profile', 'Profile', 'nav-profile')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>Profile</div>
         </div>
     </div>
 
     <script>
-        let myName = '';
+        // اسم پیش فرض کاربر (چون صفحه لاگین حذف شده)
+        let myName = 'کاربر';
+        let currentRoomType = '';
+        let mediaRecorder;
+        let audioChunks = [];
 
-        // --- لاگین ---
-        function startChat() {
-            myName = document.getElementById('setup-name').value.trim();
-            if (!myName) { alert('Please enter your name'); return; }
-            
-            document.getElementById('setup-area').style.display = 'none';
-            document.getElementById('app').style.display = 'flex';
-            
-            loadProfileData();
-            switchTab('view-chat-list', 'Telegram', 'nav-chats');
-        }
+        // برنامه از قبل باز است
+        document.getElementById('app').style.display = 'flex';
 
-        // --- پروفایل ---
-        function loadProfileData() {
-            let savedName = myName;
-            let savedStatus = 'Online';
-            
-            try {
-                savedName = localStorage.getItem('tg_name') || myName;
-                savedStatus = localStorage.getItem('tg_status') || 'Online';
-            } catch(e) {}
-
-            document.getElementById('profile-name').innerText = savedName;
-            document.getElementById('profile-status').innerText = savedStatus;
-        }
-
-        function openEditModal() {
-            document.getElementById('edit-name-input').value = document.getElementById('profile-name').innerText;
-            document.getElementById('edit-status-input').value = document.getElementById('profile-status').innerText;
-            document.getElementById('edit-modal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('edit-modal').style.display = 'none';
-        }
-
-        function saveProfile() {
-            const newName = document.getElementById('edit-name-input').value.trim();
-            const newStatus = document.getElementById('edit-status-input').value.trim();
-
-            document.getElementById('profile-name').innerText = newName || myName;
-            document.getElementById('profile-status').innerText = newStatus || 'Online';
-
-            try {
-                if(newName) localStorage.setItem('tg_name', newName);
-                if(newStatus) localStorage.setItem('tg_status', newStatus);
-            } catch(e) {}
-            
-            closeEditModal();
-        }
-
-        // --- ناوبری ---
         function switchTab(viewId, title, navId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -221,33 +179,24 @@
             if(navId) document.getElementById(navId).classList.add('active');
             document.getElementById('header').style.display = (viewId === 'view-chat-room') ? 'none' : 'flex';
             document.getElementById('header-title').innerText = title;
-            document.getElementById('emoji-panel').classList.remove('active');
         }
 
-        function openRoom(roomName) {
+        function openRoom(roomName, type) {
+            currentRoomType = type;
             document.getElementById('room-title').innerText = roomName;
+            
+            let status = type === 'bot' ? 'bot is typing...' : (type === 'group' ? '5 members online' : 'online');
+            document.getElementById('room-status').innerText = status;
+            
             switchTab('view-chat-room', '', null);
+            
+            if(type === 'bot' && document.getElementById('messages-container').children.length === 0) {
+                displayMessage('AI Bot 🤖', 'Hello! I am your AI assistant. How can I help you today?');
+            }
         }
 
         function closeRoom() {
             switchTab('view-chat-list', 'Telegram', 'nav-chats');
-        }
-
-        function toggleTheme() {
-            const html = document.documentElement;
-            if (document.getElementById('theme-toggle').checked) html.setAttribute('data-theme', 'dark');
-            else html.setAttribute('data-theme', 'light');
-        }
-
-        // --- چت ---
-        function toggleEmoji() {
-            document.getElementById('emoji-panel').classList.toggle('active');
-        }
-
-        function addEmoji(emoji) {
-            const input = document.getElementById('msg-input');
-            input.value += emoji;
-            input.focus();
         }
 
         function getTime() {
@@ -255,14 +204,13 @@
             return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
         }
 
-        // نمایش پیام روی صفحه
-        function displayMessage(sender, content) {
+        function displayMessage(sender, contentHtml) {
             const div = document.createElement('div');
             div.className = sender === myName ? 'message msg-mine' : 'message msg-other';
             
             div.innerHTML = `
                 <div class="sender-name">${sender}</div>
-                <div>${content}</div>
+                <div>${contentHtml}</div>
                 <div class="msg-time">${getTime()}</div>
                 <div style="clear:both;"></div>
             `;
@@ -272,17 +220,89 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // ارسال پیام
         function sendMessage() {
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
             if (!content) return;
             
             input.value = '';
-            document.getElementById('emoji-panel').classList.remove('active');
-            
             displayMessage(myName, content);
+            toggleRecordBtn(); 
+            
+            if (currentRoomType === 'bot') {
+                setTimeout(() => {
+                    displayMessage('AI Bot 🤖', `You said: "${content}". That's interesting! (This is an automated reply).`);
+                }, 1500);
+            }
+        }
+
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                if (file.type.startsWith('image')) {
+                    displayMessage(myName, `<img src="${base64}" class="msg-image">`);
+                } else if (file.type.startsWith('video')) {
+                    displayMessage(myName, `<video src="${base64}" class="msg-image" controls></video>`);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function toggleRecordBtn() {
+            const input = document.getElementById('msg-input').value;
+            const sendBtn = document.getElementById('send-btn');
+            const recordBtn = document.getElementById('record-btn');
+            
+            if (input.trim().length > 0) {
+                sendBtn.style.display = 'flex';
+                recordBtn.style.display = 'none';
+            } else {
+                sendBtn.style.display = 'none';
+                recordBtn.style.display = 'flex';
+            }
+        }
+
+        async function toggleRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                document.getElementById('record-btn').style.color = '#ff3b30';
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    displayMessage(myName, `<audio src="${audioUrl}" controls class="msg-audio"></audio>`);
+                    audioChunks = [];
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                document.getElementById('record-btn').style.color = 'var(--active-green)';
+                
+            } catch (err) {
+                alert("برای ضبط صدا باید به میکروفون دسترسی بدید.");
+            }
+        }
+
+        function startCall() {
+            document.getElementById('call-screen').style.display = 'flex';
+            document.getElementById('call-name').innerText = document.getElementById('room-title').innerText;
+        }
+
+        function endCall() {
+            document.getElementById('call-screen').style.display = 'none';
         }
     </script>
 </body>
-                    </html>
+</html>
